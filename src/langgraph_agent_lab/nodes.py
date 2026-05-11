@@ -10,11 +10,39 @@ import re
 
 from .state import AgentState, ApprovalDecision, Route, make_event
 
-# Keywords used for routing (checked in priority order: risky > tool > missing_info > error > simple)
-_RISKY_KEYWORDS = {"refund", "delete", "send", "cancel", "remove", "revoke"}
-_TOOL_KEYWORDS = {"status", "order", "lookup", "check", "track", "find", "search"}
-_ERROR_KEYWORDS = {"timeout", "fail", "failure", "error", "crash", "unavailable"}
-_VAGUE_PRONOUNS = {"it", "this", "that", "them", "these", "those"}
+# Keywords used for routing (checked in priority order: risky > tool > error > missing_info > simple)
+# Note: error is checked BEFORE missing_info so short error queries (e.g. "Service unavailable")
+# are not misclassified as missing_info.
+# Inflected forms are listed explicitly to avoid prefix-matching false positives (e.g. "download" vs "down").
+_RISKY_KEYWORDS = {
+    "refund", "refunded", "refunding",
+    "delete", "deleted", "deleting",
+    "send", "sent", "sending",
+    "cancel", "cancelled", "canceled", "canceling", "cancellation",
+    "remove", "removed", "removing",
+    "revoke", "revoked", "revoking",
+    "terminate", "terminated", "terminating",
+    "suspend", "suspended", "suspending",
+    "override", "overriding", "overridden",
+}
+_TOOL_KEYWORDS = {
+    "status", "order", "orders", "lookup",
+    "check", "checked", "checking",
+    "track", "tracked", "tracking",
+    "find", "finding", "found",
+    "search", "searching", "searches",
+    "retrieve", "retrieved", "retrieving",
+    "fetch", "fetching", "fetched",
+    "show", "showing",
+}
+_ERROR_KEYWORDS = {
+    "timeout", "timed",
+    "fail", "failed", "failing", "failure", "failures", "fails",
+    "error", "errors",
+    "crash", "crashed", "crashing", "crashes",
+    "unavailable", "down", "broken", "unrecoverable",
+}
+_VAGUE_PRONOUNS = {"it", "this", "that", "them", "these", "those", "something", "anything"}
 
 
 def _tokenize(text: str) -> list[str]:
@@ -49,10 +77,10 @@ def classify_node(state: AgentState) -> dict:
         risk_level = "high"
     elif tokens & _TOOL_KEYWORDS:
         route = Route.TOOL
-    elif len(tokens) < 5 and tokens & _VAGUE_PRONOUNS:
-        route = Route.MISSING_INFO
     elif tokens & _ERROR_KEYWORDS:
         route = Route.ERROR
+    elif len(tokens) < 4 or (len(tokens) < 7 and tokens & _VAGUE_PRONOUNS):
+        route = Route.MISSING_INFO
 
     return {
         "route": route.value,
@@ -214,6 +242,6 @@ def dead_letter_node(state: AgentState) -> dict:
     }
 
 
-def finalize_node(state: AgentState) -> dict:
+def finalize_node(_state: AgentState) -> dict:
     """Finalize the run and emit a final audit event."""
     return {"events": [make_event("finalize", "completed", "workflow finished")]}
