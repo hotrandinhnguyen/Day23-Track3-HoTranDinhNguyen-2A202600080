@@ -5,3 +5,23 @@
 {"id":"S05_error","query":"Timeout failure while processing request","expected_route":"error","requires_approval":false,"should_retry":true,"tags":["retry"]}
 {"id":"S06_delete","query":"Delete customer account after support verification","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["hitl","destructive"]}
 {"id":"S07_dead_letter","query":"System failure cannot recover after multiple attempts","expected_route":"error","requires_approval":false,"should_retry":true,"max_attempts":1,"tags":["dead_letter","retry"]}
+{"id":"S08_cancel","query":"Cancel my subscription immediately","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["risky","keyword_conflict"]}
+{"id":"S09_track","query":"Track my package delivery","expected_route":"tool","requires_approval":false,"should_retry":false,"tags":["tool"]}
+{"id":"S10_short","query":"Help","expected_route":"missing_info","requires_approval":false,"should_retry":false,"tags":["clarification","short_query"]}
+{"id":"S11_vague_long","query":"Can you help me with that?","expected_route":"missing_info","requires_approval":false,"should_retry":false,"tags":["clarification","vague_pronoun"]}
+{"id":"S12_uppercase","query":"REFUND MY PURCHASE NOW","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["risky","uppercase"]}
+{"id":"S13_multi_error","query":"Application crash error unrecoverable","expected_route":"error","requires_approval":false,"should_retry":true,"tags":["retry","multi_keyword"]}
+{"id":"S14_revoke","query":"Revoke admin access for user john","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["risky","access_control"]}
+{"id":"S15_short_error","query":"System unavailable timeout","expected_route":"error","requires_approval":false,"should_retry":true,"tags":["retry","short_query"]}
+{"id":"S16_find_order","query":"Find order 67890 details","expected_route":"tool","requires_approval":false,"should_retry":false,"tags":["tool","number_in_query"]}
+{"id":"S17_search","query":"Search for recent transactions","expected_route":"tool","requires_approval":false,"should_retry":false,"tags":["tool"]}
+{"id":"S18_inflect_crash","query":"The system crashed","expected_route":"error","requires_approval":false,"should_retry":true,"tags":["retry","inflection"]}
+{"id":"S19_inflect_delete","query":"I accidentally deleted my files","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["risky","inflection"]}
+{"id":"S20_inflect_fail","query":"Server is failing to respond","expected_route":"error","requires_approval":false,"should_retry":true,"tags":["retry","inflection"]}
+{"id":"S21_inflect_cancel","query":"My subscription was cancelled automatically","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["risky","inflection"]}
+{"id":"S22_inflect_override","query":"Overriding production settings without approval","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["risky","inflection"]}
+{"id":"S23_inflect_crash2","query":"The service has been crashing since morning","expected_route":"error","requires_approval":false,"should_retry":true,"tags":["retry","inflection"]}
+{"id":"S24_risky_priority","query":"Refund failed due to timeout error","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["risky","keyword_conflict","priority"]}
+{"id":"S25_retrieve","query":"Retrieve the latest customer invoice","expected_route":"tool","requires_approval":false,"should_retry":false,"tags":["tool"]}
+{"id":"S26_fetch","query":"Fetch account details for user ID 9900","expected_route":"tool","requires_approval":false,"should_retry":false,"tags":["tool","number_in_query"]}
+{"id":"S27_multi_risky","query":"I want to remove all my data and delete account","expected_route":"risky","requires_approval":true,"should_retry":false,"tags":["risky","multi_keyword"]}
