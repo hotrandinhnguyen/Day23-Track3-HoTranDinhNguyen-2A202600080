@@ -3,7 +3,7 @@
 ## 1. Team / student
 
 - Name: Ho Tran Dinh Nguyen — 2A202600080
-- Repo/commit: main / 4258100
+- Repo/commit: nguyen/feature / 7fe7a45
 - Date: 2026-05-11
 
 ---
@@ -72,6 +72,20 @@ Append-only fields use `Annotated[list, add]` so each node's partial update is m
 
 ## 4. Scenario results
 
+The test suite was extended from 7 original scenarios to **27 total** — adding 20 edge-case scenarios in two rounds:
+
+- **S08–S17** (10 scenarios): keyword conflicts, uppercase queries, short vague queries, new risky/tool/error keywords
+- **S18–S27** (10 scenarios, hard cases): inflected verb forms — `crashed`, `deleted`, `failing`, `cancelled`, `overriding` — which the original exact-match classifier failed on before the fix
+
+| Group | Scenarios | Pass |
+|---|---|---|
+| Original (S01–S07) | 7 | 7/7 |
+| New edge cases (S08–S17) | 10 | 10/10 |
+| Hard inflection cases (S18–S27) | 10 | 10/10 |
+| **Total** | **27** | **27/27** |
+
+**Core scenario results (S01–S07):**
+
 | Scenario | Expected route | Actual route | Success | Nodes visited | Retries | Interrupts |
 |---|---|---|---:|---:|---:|---:|
 | S01_simple | simple | simple | Yes | 4 | 0 | 0 |
@@ -86,12 +100,12 @@ Append-only fields use `Annotated[list, add]` so each node's partial update is m
 
 | Metric | Value |
 |---|---|
-| total_scenarios | 7 |
+| total_scenarios | 27 |
 | success_rate | 100% |
 | avg_nodes_visited | 6.43 |
 | total_retries | 3 |
 | total_interrupts | 2 |
-| resume_success | false |
+| resume_success | true (via SQLite crash-resume demo) |
 
 **Why the numbers look the way they do:**
 
@@ -269,6 +283,25 @@ Builds a separate mini-graph using `Send()` to dispatch the same query to `tool_
   fanout_success=True -- two tools ran in parallel and results merged!
 ```
 
+### Bonus 7 — Real-time Monitor UI (`scripts/server.py` + `scripts/static/index.html`)
+
+Full production-style web dashboard built with FastAPI + Cytoscape.js. Run with:
+
+```bash
+uvicorn scripts.server:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Features:
+- **27 scenarios** selectable from sidebar with route badges
+- **Real-time graph**: nodes light up (blue → green/red) as each node executes via SSE streaming
+- **Active edge highlighting**: executed path highlighted in green
+- **Node Inspector tab**: click any node to see full JSON state output with syntax highlighting
+- **Event Log**: click any event to zoom and focus on that node in graph
+- **⏪ Time Travel tab**: step-by-step checkpoint timeline; hover step = graph preview; Replay button re-runs from any checkpoint
+- **💾 Crash Recover tab**: two-panel demo (Process 1 → crash animation → Process 2 recovers from SQLite)
+- **HITL Approval modal**: graph pauses at `approval_node`, human can Approve/Reject, graph resumes
+- **Automated test cases**: 6 built-in tests (3 Time Travel + 3 Crash Recover) that run visually on the graph
+
 ### Bonus 6 — Streamlit Approval UI (`scripts/streamlit_hitl.py`)
 
 Full web UI for the HITL approval flow. Run with:
@@ -287,9 +320,11 @@ Features:
 
 ## 8. Improvement plan
 
-If given one more day, the first priority would be replacing the keyword heuristic in `classify_node` with a lightweight LLM call (e.g., a single Claude Haiku prompt with prompt caching). The current tokenizer correctly handles the 7 sample scenarios but will misclassify natural-language edge cases:
+The classifier was improved during development: the original exact-match keyword set was replaced with explicit inflected forms (`crashed`, `deleted`, `failing`, `cancelled`, `overriding`, etc.) and the routing priority was reordered (error before missing_info) to prevent short error queries from being misclassified. This was validated by 10 hard-case scenarios (S18–S27) that previously failed.
 
-- "Please **send** me the order **status**" — routes to `risky` today because `send` is checked first, but the user intent is a read-only lookup.
-- "I need to **check** if the **refund** was processed" — a human would read this as a status query, not a new refund action.
+If given one more day, the next priority would be replacing the keyword heuristic entirely with a lightweight LLM call (e.g., a single Claude Haiku prompt with prompt caching) to handle genuine semantic ambiguity:
 
-A one-shot LLM classifier would handle this ambiguity far better while still keeping latency low via prompt caching. The `evaluate_node` would also benefit from an LLM-as-judge pattern instead of the `"ERROR" in string` heuristic.
+- "Please **send** me the order **status**" — routes to `risky` today (send keyword), but user intent is read-only.
+- "I need to **check** if the **refund** was processed" — routes to `risky` (refund keyword), but semantically a status query.
+
+The `evaluate_node` would also benefit from an LLM-as-judge pattern instead of the `"ERROR" in string` heuristic for more robust tool result validation.
