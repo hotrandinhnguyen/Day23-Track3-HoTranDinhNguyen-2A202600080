@@ -31,4 +31,8 @@ Explain your architecture, state schema, failure modes, and improvement plan.
 def write_report(metrics: MetricsReport, output_path: str | Path) -> None:
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_report_stub(metrics), encoding="utf-8")
+    # Do not overwrite a manually written report (longer than the generated stub).
+    stub = render_report_stub(metrics)
+    if path.exists() and len(path.read_text(encoding="utf-8")) > len(stub):
+        return
+    path.write_text(stub, encoding="utf-8")

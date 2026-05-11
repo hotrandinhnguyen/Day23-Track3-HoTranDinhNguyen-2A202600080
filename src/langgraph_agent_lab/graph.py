@@ -57,13 +57,25 @@ def build_graph(checkpointer: Any | None = None):
 
     graph.add_edge(START, "intake")
     graph.add_edge("intake", "classify")
-    graph.add_conditional_edges("classify", route_after_classify)
+    graph.add_conditional_edges(
+        "classify", route_after_classify,
+        {"answer": "answer", "tool": "tool", "clarify": "clarify", "risky_action": "risky_action", "retry": "retry"},
+    )
     graph.add_edge("tool", "evaluate")
-    graph.add_conditional_edges("evaluate", route_after_evaluate)
+    graph.add_conditional_edges(
+        "evaluate", route_after_evaluate,
+        {"retry": "retry", "answer": "answer"},
+    )
     graph.add_edge("clarify", "finalize")
     graph.add_edge("risky_action", "approval")
-    graph.add_conditional_edges("approval", route_after_approval)
-    graph.add_conditional_edges("retry", route_after_retry)
+    graph.add_conditional_edges(
+        "approval", route_after_approval,
+        {"tool": "tool", "clarify": "clarify"},
+    )
+    graph.add_conditional_edges(
+        "retry", route_after_retry,
+        {"tool": "tool", "dead_letter": "dead_letter"},
+    )
     graph.add_edge("answer", "finalize")
     graph.add_edge("dead_letter", "finalize")
     graph.add_edge("finalize", END)
